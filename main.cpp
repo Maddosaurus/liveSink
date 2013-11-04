@@ -33,6 +33,8 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
 
+#include "extendedfilesink.h"
+
 // Forward function definitions:
 
 // RTSP 'response handlers':
@@ -138,10 +140,6 @@ protected:
 
 public:
   StreamClientState scs;
-};
-
-class DBSink: public FileSink {
-
 };
 
 // Define a data sink (a subclass of "MediaSink") to receive the data for each subsession (i.e., each audio or video 'substream').
@@ -289,13 +287,16 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
     // after we've sent a RTSP "PLAY" command.)
 
     //scs.subsession->sink = DummySink::createNew(env, *scs.subsession, rtspClient->url());
-    scs.subsession->sink = FileSink::createNew(env,"out.jpeg",60000, True);
+    //scs.subsession->sink = FileSink::createNew(env,"out.jpeg",60000, True);
+    scs.subsession->sink = ExtendedFileSink::createNew(env,"out.jpeg",60000, True);
       // perhaps use your own custom "MediaSink" subclass instead
     if (scs.subsession->sink == NULL) {
       env << *rtspClient << "Failed to create a data sink for the \"" << *scs.subsession
       << "\" subsession: " << env.getResultMsg() << "\n";
       break;
     }
+    else
+        env << "Stream creation succeeded! \n";
 
     env << *rtspClient << "Created a data sink for the \"" << *scs.subsession << "\" subsession" << "ID: " << scs.subsession->sink->name() << "\n";
     scs.subsession->miscPtr = rtspClient; // a hack to let subsession handle functions get the "RTSPClient" from the subsession
@@ -534,3 +535,4 @@ Boolean DummySink::continuePlaying() {
                         onSourceClosure, this);
   return True;
 }
+

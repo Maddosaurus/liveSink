@@ -16,11 +16,13 @@ LIBS += /usr/local/lib/libliveMedia.a \
 
 SOURCES += main.cpp \
     dbsink.cpp \
-    dbconnection.cpp
+    dbconnection.cpp \
+    extendedfilesink.cpp
 
 HEADERS += \
     dbsink.h \
-    dbconnection.h
+    dbconnection.h \
+    extendedfilesink.h
 
 #MongoDB-Config Stuff
 INCLUDEPATH += /usr/include \
