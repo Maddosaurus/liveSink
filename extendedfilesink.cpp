@@ -55,14 +55,17 @@ void ExtendedFileSink::afterGettingFrame(void* clientData, unsigned frameSize, u
 
 void ExtendedFileSink::addData(unsigned char const* data, unsigned dataSize, struct timeval presentationTime) {
     if (data != NULL) {
-        mongo::DBClientConnection c;
-        c.connect("localhost");
-        mongo::GridFS gfs = mongo::GridFS(c, "grDB");
+//        mongo::DBClientConnection c;
+//        c.connect("localhost");
+        mongo::ScopedDbConnection c("localhost");
+        mongo::GridFS gfs = mongo::GridFS(c.conn(), "grDB");
 
         std::stringstream ss;
         ss << presentationTime.tv_usec << "-cam01.jpeg";
 
         gfs.storeFile(reinterpret_cast<const char*>(data), dataSize, ss.str());
+
+        c.done();
     }
 }
 
