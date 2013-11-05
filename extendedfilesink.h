@@ -23,16 +23,14 @@ protected: // redefined virtual functions:
 
 
 protected:
-  static void afterGettingFrame(void* clientData, unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime, unsigned durationInMicroseconds);
-  virtual void afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime);
-  //virtual void afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime);
+    static void afterGettingFrame(void* clientData, unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime, unsigned durationInMicroseconds);
+    virtual void afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime);
 
-  FILE* fOutFid;
-  unsigned char* fBuffer;
-  unsigned fBufferSize;
-  char* fPerFrameFileNamePrefix; // used if "oneFilePerFrame" is True
-  char* fPerFrameFileNameBuffer; // used if "oneFilePerFrame" is True
-
+    FILE* fOutFid;
+    unsigned char* fBuffer;
+    unsigned fBufferSize;
+    char* fPerFrameFileNamePrefix; // used if "oneFilePerFrame" is True
+    char* fPerFrameFileNameBuffer; // used if "oneFilePerFrame" is True
 };
 
 #endif // EXTENDEDFILESINK_H
