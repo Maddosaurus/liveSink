@@ -288,6 +288,8 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
 
     //scs.subsession->sink = DummySink::createNew(env, *scs.subsession, rtspClient->url());
     //scs.subsession->sink = FileSink::createNew(env,"out.jpeg",60000, True);
+    //scs.subsession->sink = ExtendedFileSink::createNew(env,"out.jpeg",60000, True);
+    StreamReplicator* replicator = StreamReplicator::createNew(*env, scs.subsession->readSource());
     scs.subsession->sink = ExtendedFileSink::createNew(env,"out.jpeg",60000, True);
       // perhaps use your own custom "MediaSink" subclass instead
     if (scs.subsession->sink == NULL) {
