@@ -10,11 +10,11 @@
 
 class ExtendedFileSink: public MediaSink {
 public:
-    static ExtendedFileSink* createNew(UsageEnvironment& env, char const* fileName, unsigned bufferSize = 20000, Boolean oneFilePerFrame = False);
+    static ExtendedFileSink* createNew(UsageEnvironment& env, char const* fPrefix, unsigned bufferSize = 20000, Boolean oneFilePerFrame = False);
     void addData(unsigned char const* data, unsigned dataSize, struct timeval presentationTime);
 
 protected:
-    ExtendedFileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize, char const* perFrameFileNamePrefix);
+    ExtendedFileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize, char const* perFrameFileNamePrefix,char const* fNameSuffix);
       // called only by createNew()
     virtual ~ExtendedFileSink();
 
@@ -31,6 +31,7 @@ protected:
     unsigned fBufferSize;
     char* fPerFrameFileNamePrefix; // used if "oneFilePerFrame" is True
     char* fPerFrameFileNameBuffer; // used if "oneFilePerFrame" is True
+    char const* fNameSuffix;
 };
 
 #endif // EXTENDEDFILESINK_H

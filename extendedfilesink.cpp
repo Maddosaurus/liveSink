@@ -1,7 +1,7 @@
 #include "extendedfilesink.h"
 #include <sstream>
 
-ExtendedFileSink::ExtendedFileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize, char const* perFrameFileNamePrefix) : MediaSink(env), fOutFid(fid), fBufferSize(bufferSize) {
+ExtendedFileSink::ExtendedFileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize, char const* perFrameFileNamePrefix, char const* fNameSuffix) : MediaSink(env), fOutFid(fid), fBufferSize(bufferSize) {
     fBuffer = new unsigned char[bufferSize];
     if (perFrameFileNamePrefix != NULL) {
         fPerFrameFileNamePrefix = strDup(perFrameFileNamePrefix);
@@ -10,6 +10,8 @@ ExtendedFileSink::ExtendedFileSink(UsageEnvironment& env, FILE* fid, unsigned bu
         fPerFrameFileNamePrefix = NULL;
         fPerFrameFileNameBuffer = NULL;
     }
+
+    ExtendedFileSink::fNameSuffix=fNameSuffix;
 }
 
 ExtendedFileSink::~ExtendedFileSink() {
@@ -19,22 +21,23 @@ ExtendedFileSink::~ExtendedFileSink() {
     if (fOutFid != NULL) fclose(fOutFid);
 }
 
-ExtendedFileSink* ExtendedFileSink::createNew(UsageEnvironment& env, char const* fileName, unsigned bufferSize, Boolean oneFilePerFrame) {
+ExtendedFileSink* ExtendedFileSink::createNew(UsageEnvironment& env, char const* fNameSuffix, unsigned bufferSize, Boolean oneFilePerFrame) {
     do {
+
         FILE* fid;
         char const* perFrameFileNamePrefix;
         if (oneFilePerFrame) {
             // Create the fid for each frame
             fid = NULL;
-            perFrameFileNamePrefix = fileName;
+            perFrameFileNamePrefix = fNameSuffix;
         } else {
             // Normal case: create the fid once
-            fid = OpenOutputFile(env, fileName);
+            fid = OpenOutputFile(env, fNameSuffix);
             if (fid == NULL) break;
             perFrameFileNamePrefix = NULL;
         }
 
-        return new ExtendedFileSink(env, fid, bufferSize, perFrameFileNamePrefix);
+        return new ExtendedFileSink(env, fid, bufferSize, perFrameFileNamePrefix, fNameSuffix);
     } while (0);
 
     return NULL;
@@ -55,13 +58,11 @@ void ExtendedFileSink::afterGettingFrame(void* clientData, unsigned frameSize, u
 
 void ExtendedFileSink::addData(unsigned char const* data, unsigned dataSize, struct timeval presentationTime) {
     if (data != NULL) {
-//        mongo::DBClientConnection c;
-//        c.connect("localhost");
         mongo::ScopedDbConnection c("localhost");
         mongo::GridFS gfs = mongo::GridFS(c.conn(), "grDB");
 
         std::stringstream ss;
-        ss << presentationTime.tv_usec << "-cam01.jpeg";
+        ss << presentationTime.tv_usec << fNameSuffix;
 
         gfs.storeFile(reinterpret_cast<const char*>(data), dataSize, ss.str());
 

@@ -99,7 +99,7 @@ void DummySink::afterGettingFrame(void* clientData, unsigned frameSize, unsigned
 #define DEBUG_PRINT_EACH_RECEIVED_FRAME 1
 
 void DummySink::afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes,
-                  struct timeval presentationTime, unsigned /*durationInMicroseconds*/  /*) {
+                  struct timeval presentationTime, ) { //unsigned durationInMicroseconds  ) {
   // We've just received a frame of data.  (Optionally) print out information about it:
 #ifdef DEBUG_PRINT_EACH_RECEIVED_FRAME
   if (fStreamId != NULL) envir() << "Stream \"" << fStreamId << "\"; ";
