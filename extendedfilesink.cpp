@@ -1,46 +1,46 @@
 #include "extendedfilesink.h"
 #include <sstream>
 
-ExtendedFileSink::ExtendedFileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize, char const* perFrameFileNamePrefix, char const* fNameSuffix) : MediaSink(env), fOutFid(fid), fBufferSize(bufferSize) {
+ExtendedFileSink::ExtendedFileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize, /*char const* perFrameFileNamePrefix,*/ char const* fNameSuffix) : MediaSink(env), fOutFid(fid), fBufferSize(bufferSize) {
     fBuffer = new unsigned char[bufferSize];
-    if (perFrameFileNamePrefix != NULL) {
-        fPerFrameFileNamePrefix = strDup(perFrameFileNamePrefix);
-        fPerFrameFileNameBuffer = new char[strlen(perFrameFileNamePrefix) + 100];
-    } else {
-        fPerFrameFileNamePrefix = NULL;
-        fPerFrameFileNameBuffer = NULL;
-    }
+//    if (perFrameFileNamePrefix != NULL) {
+//        fPerFrameFileNamePrefix = strDup(perFrameFileNamePrefix);
+//        fPerFrameFileNameBuffer = new char[strlen(perFrameFileNamePrefix) + 100];
+//    } else {
+//        fPerFrameFileNamePrefix = NULL;
+//        fPerFrameFileNameBuffer = NULL;
+//    }
 
     ExtendedFileSink::fNameSuffix=fNameSuffix;
 }
 
 ExtendedFileSink::~ExtendedFileSink() {
-    delete[] fPerFrameFileNameBuffer;
-    delete[] fPerFrameFileNamePrefix;
+//    delete[] fPerFrameFileNameBuffer;
+//    delete[] fPerFrameFileNamePrefix;
     delete[] fBuffer;
-    if (fOutFid != NULL) fclose(fOutFid);
+//    if (fOutFid != NULL) fclose(fOutFid);
 }
 
-ExtendedFileSink* ExtendedFileSink::createNew(UsageEnvironment& env, char const* fNameSuffix, unsigned bufferSize, Boolean oneFilePerFrame) {
-    do {
+ExtendedFileSink* ExtendedFileSink::createNew(UsageEnvironment& env, char const* fNameSuffix, unsigned bufferSize) {
+//    do {
 
-        FILE* fid;
-        char const* perFrameFileNamePrefix;
-        if (oneFilePerFrame) {
-            // Create the fid for each frame
-            fid = NULL;
-            perFrameFileNamePrefix = fNameSuffix;
-        } else {
-            // Normal case: create the fid once
-            fid = OpenOutputFile(env, fNameSuffix);
-            if (fid == NULL) break;
-            perFrameFileNamePrefix = NULL;
-        }
+//        FILE* fid;
+//        char const* perFrameFileNamePrefix;
+//        if (oneFilePerFrame) {
+//            // Create the fid for each frame
+//            fid = NULL;
+//            perFrameFileNamePrefix = fNameSuffix;
+//        } else {
+//            // Normal case: create the fid once
+//            fid = OpenOutputFile(env, fNameSuffix);
+//            if (fid == NULL) break;
+//            perFrameFileNamePrefix = NULL;
+//        }
 
-        return new ExtendedFileSink(env, fid, bufferSize, perFrameFileNamePrefix, fNameSuffix);
-    } while (0);
+        return new ExtendedFileSink(env, /*fid*/NULL, bufferSize, /*perFrameFileNamePrefix,*/ fNameSuffix);
+//    } while (0);
 
-    return NULL;
+//    return NULL;
 }
 
 Boolean ExtendedFileSink::continuePlaying() {
