@@ -1,3 +1,6 @@
+//für die Kamera diesen rtsp-Path nutzen:
+// rtsp://192.168.1.200:554/rtspjpeg480p
+
 //#include <iostream>
 
 //using namespace std;
@@ -34,6 +37,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "BasicUsageEnvironment.hh"
 
 #include "extendedfilesink.h"
+#include "iostream"
 
 // Forward function definitions:
 
@@ -245,18 +249,22 @@ void setupNextSubsession(RTSPClient* rtspClient) {
   StreamClientState& scs = ((ourRTSPClient*)rtspClient)->scs; // alias
 
   scs.subsession = scs.iter->next();
-  if (scs.subsession != NULL) {
-    if (!scs.subsession->initiate()) {
-      env << *rtspClient << "Failed to initiate the \"" << *scs.subsession << "\" subsession: " << env.getResultMsg() << "\n";
-      setupNextSubsession(rtspClient); // give up on this subsession; go to the next one
-    } else {
-      env << *rtspClient << "Initiated the \"" << *scs.subsession
-      << "\" subsession (client ports " << scs.subsession->clientPortNum() << "-" << scs.subsession->clientPortNum()+1 << ")\n";
+  std::string result = scs.subsession->mediumName();        //Get the medium name
+  if ((scs.subsession != NULL) && (result!= "audio")) {     //We don't want audio for now, so ignore it
+      if (!scs.subsession->initiate()) {
+          env << *rtspClient << "Failed to initiate the \"" << *scs.subsession << "\" subsession: " << env.getResultMsg() << "\n";
+          setupNextSubsession(rtspClient); // give up on this subsession; go to the next one
+      } else {
 
-      // Continue setting up this subsession, by sending a RTSP "SETUP" command:
-      rtspClient->sendSetupCommand(*scs.subsession, continueAfterSETUP, False, REQUEST_STREAMING_OVER_TCP);
-    }
-    return;
+
+          env << *rtspClient << "Initiated the \"" << *scs.subsession
+              << "\" subsession (client ports " << scs.subsession->clientPortNum() << "-" << scs.subsession->clientPortNum()+1 << ")\n";
+         // if(result != "audio"){
+              // Continue setting up this subsession, by sending a RTSP "SETUP" command:
+              rtspClient->sendSetupCommand(*scs.subsession, continueAfterSETUP, False, REQUEST_STREAMING_OVER_TCP);
+        //  }
+      }
+      return;
   }
 
   // We've finished setting up all of the subsessions.  Now, send a RTSP "PLAY" command to start the streaming:
