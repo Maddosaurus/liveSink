@@ -1,46 +1,20 @@
 #include "extendedfilesink.h"
 #include <sstream>
 
-ExtendedFileSink::ExtendedFileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize, /*char const* perFrameFileNamePrefix,*/ char const* fNameSuffix) : MediaSink(env), fOutFid(fid), fBufferSize(bufferSize) {
+ExtendedFileSink::ExtendedFileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize, std::string tmpCamNameSuffix) : MediaSink(env), fOutFid(fid), fBufferSize(bufferSize) {
     fBuffer = new unsigned char[bufferSize];
-//    if (perFrameFileNamePrefix != NULL) {
-//        fPerFrameFileNamePrefix = strDup(perFrameFileNamePrefix);
-//        fPerFrameFileNameBuffer = new char[strlen(perFrameFileNamePrefix) + 100];
-//    } else {
-//        fPerFrameFileNamePrefix = NULL;
-//        fPerFrameFileNameBuffer = NULL;
-//    }
-
-    ExtendedFileSink::fNameSuffix=fNameSuffix;
+    this->stringfNameSuffix=tmpCamNameSuffix;
+    std::cout <<"EFS: local ---" << this->stringfNameSuffix<< std::endl;
+    std::cout <<"EFS: global ---" << ExtendedFileSink::stringfNameSuffix<< std::endl;
 }
 
 ExtendedFileSink::~ExtendedFileSink() {
-//    delete[] fPerFrameFileNameBuffer;
-//    delete[] fPerFrameFileNamePrefix;
     delete[] fBuffer;
-//    if (fOutFid != NULL) fclose(fOutFid);
+    //delete[] ExtendedFileSink::fNameSuffix;
 }
 
-ExtendedFileSink* ExtendedFileSink::createNew(UsageEnvironment& env, char const* fNameSuffix, unsigned bufferSize) {
-//    do {
-
-//        FILE* fid;
-//        char const* perFrameFileNamePrefix;
-//        if (oneFilePerFrame) {
-//            // Create the fid for each frame
-//            fid = NULL;
-//            perFrameFileNamePrefix = fNameSuffix;
-//        } else {
-//            // Normal case: create the fid once
-//            fid = OpenOutputFile(env, fNameSuffix);
-//            if (fid == NULL) break;
-//            perFrameFileNamePrefix = NULL;
-//        }
-
-        return new ExtendedFileSink(env, /*fid*/NULL, bufferSize, /*perFrameFileNamePrefix,*/ fNameSuffix);
-//    } while (0);
-
-//    return NULL;
+ExtendedFileSink* ExtendedFileSink::createNew(UsageEnvironment& env, std::string tmpCamNameSuffix, unsigned bufferSize) {
+    return new ExtendedFileSink(env, /*fid*/NULL, bufferSize, tmpCamNameSuffix);
 }
 
 Boolean ExtendedFileSink::continuePlaying() {
@@ -62,9 +36,10 @@ void ExtendedFileSink::addData(unsigned char const* data, unsigned dataSize, str
         mongo::GridFS gfs = mongo::GridFS(c.conn(), "grDB");
 
         std::stringstream ss;
-        ss << presentationTime.tv_usec << fNameSuffix;
+        ss << presentationTime.tv_usec << this->stringfNameSuffix;
+        std::cout <<"addData:" << this->stringfNameSuffix<< std::endl;
 
-        gfs.storeFile(reinterpret_cast<const char*>(data), dataSize, ss.str());
+        gfs.storeFile(reinterpret_cast<const char*>(data), dataSize, this->stringfNameSuffix);//ss.str());
 
         c.done();
     }
@@ -77,7 +52,8 @@ void ExtendedFileSink::afterGettingFrame(unsigned frameSize, unsigned numTruncat
                 << numTruncatedBytes << " bytes of trailing data was dropped!  Correct this by increasing the \"bufferSize\" parameter in the \"createNew()\" call to at least "
                 << fBufferSize + numTruncatedBytes << "\n";
     }
-    addData(fBuffer, frameSize, presentationTime);
+
+    ExtendedFileSink::addData(fBuffer, frameSize, presentationTime);
 
     // TODO: Pruefen, ob das schreiben geklappt hat!
 

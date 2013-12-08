@@ -1,16 +1,6 @@
 //für die Kamera diesen rtsp-Path nutzen:
 // rtsp://192.168.1.200:554/rtspjpeg480p
 
-//#include <iostream>
-
-//using namespace std;
-
-//int main()
-//{
-//    cout << "Hello World!" << endl;
-//    return 0;
-//}
-
 /**********
 This library is free software; you can redistribute it and/or modify it under
 the terms of the GNU Lesser General Public License as published by the
@@ -38,6 +28,10 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 #include "extendedfilesink.h"
 #include "iostream"
+#include <stdio.h>
+#include <sstream>
+
+unsigned int camCount = 0;
 
 // Forward function definitions:
 
@@ -99,14 +93,6 @@ int main(int argc, char** argv) {
     // This function call does not return, unless, at some point in time, "eventLoopWatchVariable" gets set to something non-zero.
 
   return 0;
-
-  // If you choose to continue the application past this point (i.e., if you comment out the "return 0;" statement above),
-  // and if you don't intend to do anything more with the "TaskScheduler" and "UsageEnvironment" objects,
-  // then you can also reclaim the (small) memory used by these objects by uncommenting the following code:
-  /*
-    env->reclaim(); env = NULL;
-    delete scheduler; scheduler = NULL;
-  */
 }
 
 // Define a class to hold per-stream state that we maintain throughout each stream's lifetime:
@@ -184,6 +170,7 @@ private:
 static unsigned rtspClientCount = 0; // Counts how many streams (i.e., "RTSPClient"s) are currently in use.
 
 void openURL(UsageEnvironment& env, char const* progName, char const* rtspURL) {
+    ++camCount;
   // Begin by creating a "RTSPClient" object.  Note that there is a separate "RTSPClient" object for each stream that we wish
   // to receive (even if more than stream uses the same "rtsp://" URL).
   RTSPClient* rtspClient = ourRTSPClient::createNew(env, rtspURL, RTSP_CLIENT_VERBOSITY_LEVEL, progName);
@@ -255,8 +242,6 @@ void setupNextSubsession(RTSPClient* rtspClient) {
           env << *rtspClient << "Failed to initiate the \"" << *scs.subsession << "\" subsession: " << env.getResultMsg() << "\n";
           setupNextSubsession(rtspClient); // give up on this subsession; go to the next one
       } else {
-
-
           env << *rtspClient << "Initiated the \"" << *scs.subsession
               << "\" subsession (client ports " << scs.subsession->clientPortNum() << "-" << scs.subsession->clientPortNum()+1 << ")\n";
          // if(result != "audio"){
@@ -298,13 +283,26 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
     //scs.subsession->sink = FileSink::createNew(env,"out.jpeg",60000, True);
     //scs.subsession->sink = ExtendedFileSink::createNew(env,"out.jpeg",60000, True);
     //StreamReplicator* replicator = StreamReplicator::createNew(*env, scs.subsession->readSource());
-    scs.subsession->sink = ExtendedFileSink::createNew(env, "-cam1.jpeg", 60000);
+
+    ///Neue Elemente von mir:
+    //Wir bauen uns den Camnamen
+
+    std::string camprefix = "cam";
+    std::string camsuffix = ".jpeg";
+
+    std::stringstream sstr;
+    sstr << camprefix << camCount << camsuffix;
+    std::cout << "ZZZZZ:" << sstr.str() << std::endl;
+
+
+    scs.subsession->sink = ExtendedFileSink::createNew(env, sstr.str() , 60000);
       // perhaps use your own custom "MediaSink" subclass instead
     if (scs.subsession->sink == NULL) {
       env << *rtspClient << "Failed to create a data sink for the \"" << *scs.subsession
       << "\" subsession: " << env.getResultMsg() << "\n";
       break;
     }
+    ///Neue Elemente von mir
     else
         env << "Stream creation succeeded! \n";
 
