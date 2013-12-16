@@ -15,13 +15,9 @@ LIBS += /usr/local/lib/libliveMedia.a \
         /usr/local/lib/libgroupsock.a
 
 SOURCES += main.cpp \
-    dbsink.cpp \
-    dbconnection.cpp \
     extendedfilesink.cpp
 
 HEADERS += \
-    dbsink.h \
-    dbconnection.h \
     extendedfilesink.h
 
 #MongoDB-Config Stuff

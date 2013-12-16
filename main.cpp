@@ -84,6 +84,12 @@ TaskScheduler* scheduler;
 UsageEnvironment* env;
 std::string camno;
 
+/*!
+ * \brief initializes the TaskScheduler and the UsageEnvironment,
+ * \param -n
+ * \param rtsp-URL URL of the rtsp-Stream used as MotionJPEG input stream
+ * \return Never returns except for exit (Event driven infinite loop).
+ */
 int main(int argc, char** argv) {
     // Begin by setting up our usage environment:
     scheduler = BasicTaskScheduler::createNew();
@@ -120,6 +126,7 @@ int main(int argc, char** argv) {
 }
 
 // Define a class to hold per-stream state that we maintain throughout each stream's lifetime:
+//! A class that is holding the stream state through a streams' lifetime
 class StreamClientState {
 public:
     StreamClientState();
@@ -139,11 +146,22 @@ StreamClientState scs;
 
 RTSPClient *rtspClient;
 
-#define RTSP_CLIENT_VERBOSITY_LEVEL 1 // by default, print verbose output from each "RTSPClient"
+/// If set to 1, print verbose output from each "RTSPClient"
+#define RTSP_CLIENT_VERBOSITY_LEVEL 1
 
+// By default, we request that the server stream its data using RTP/UDP.
+// If, instead, you want to request that the server stream via RTP-over-TCP, change the following to True:
+/// Default streaming tactic is RTD/UDP. For RTP-over-TCP change to true
+#define REQUEST_STREAMING_OVER_TCP False
+
+/// Count, how many RTSPClient's are used by the server
 static unsigned rtspClientCount = 0; // Counts how many streams (i.e., "RTSPClient"s) are currently in use.
 
-
+/*!
+ * \brief opens the given rtsp-URL and calls the rtsp DESCRIBE-command (with a callback-method)
+ * \param progName  name of the calling program (i.e. argv[0])
+ * \param rtspURL   rtsp-URL to be opnened (i.e. rtsp://10.10.10.10:554/rtspjpeg480p)
+ */
 void openURL(/*UsageEnvironment& env,*/ char const* progName, char const* rtspURL) {
     // Begin by creating a "RTSPClient" object.  Note that there is a separate "RTSPClient" object for each stream that we wish
     // to receive (even if more than stream uses the same "rtsp://" URL).
@@ -163,7 +181,15 @@ void openURL(/*UsageEnvironment& env,*/ char const* progName, char const* rtspUR
 
 
 // Implementation of the RTSP 'response handlers':
-
+/*!
+ * \brief Fuction to be called to parse results of the rtsp DESCRIBE command
+ *
+ * It creates a MediaSession object for each given Session. This object is stored in the StreamClientState-Object (scs.session).
+ * Finally it calls setupNextSubsession to add some detail info to the session.
+ * \param rtspClient            calling client
+ * \param resultCode            result of the DESCRIBE action
+ * \param resultString          result of the DESCRIBE action
+ */
 void continueAfterDESCRIBE(RTSPClient* rtspClient, int resultCode, char* resultString) {
     do {
         //UsageEnvironment& env = rtspClient->envir(); // alias
@@ -201,15 +227,20 @@ void continueAfterDESCRIBE(RTSPClient* rtspClient, int resultCode, char* resultS
     shutdownStream(rtspClient);
 }
 
-// By default, we request that the server stream its data using RTP/UDP.
-// If, instead, you want to request that the server stream via RTP-over-TCP, change the following to True:
-#define REQUEST_STREAMING_OVER_TCP False
 
+
+/*!
+ * \brief Sets up the next subsession which is stored in the scs.subsession object.
+ *
+ * This function sends the rtsp SETUP command to the source and sets up the callback function (continueAfterSETUP)
+ * Changes by the author: If the subsession isn't a MotionJPEG, dismiss it.
+ * \param rtspClient Environment vars
+ */
 void setupNextSubsession(RTSPClient* rtspClient) {
     scs.subsession = scs.iter->next();
     std::string result = scs.subsession->mediumName();        //Get the medium name
     std::string encoding = scs.subsession->codecName();
-    if ((scs.subsession != NULL) && (result != "audio") && (encoding == "JPEG")) {     //We don't want audio and JPEG video only for now, so ignore it
+    if ((scs.subsession != NULL) && (result != "audio") && (encoding == "JPEG")) {     //We don't want audio. We want JPEG video for now, so ignore the rest
         if (!scs.subsession->initiate()) {
             *env << *rtspClient << "Failed to initiate the \"" << *scs.subsession << "\" subsession: " << *env->getResultMsg() << "\n";
             setupNextSubsession(rtspClient); // give up on this subsession; go to the next one
@@ -233,6 +264,19 @@ void setupNextSubsession(RTSPClient* rtspClient) {
     }
 }
 
+/*!
+ * \brief Sets up the filesink for a rtsp subsession
+ *
+ * This function sets up the filesink for a given rtsp subsession, sets up the callback handler continueAfterPLAY() and sends the PLAY-command to the source (requesting it to start sending data, that is).
+ * As it is only called after filtering all subsessions, it will be only called, if the given subsession is JPEG-encoded.
+ * This ensures that the DBSink inserts only valid data into the DB.
+ * > Changes by the author: Included the build process of a variable camname for saving it in the DB.
+ * > Scheme: cam<camno>.jpeg
+ *
+ * \param rtspClient            Environment vars
+ * \param resultCode            Result of the rtsp SETUP command
+ * \param resultString          Result of the rtsp SETUP command
+ */
 void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultString) {
     do {
 
@@ -249,7 +293,7 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
         // after we've sent a RTSP "PLAY" command.)
 
 
-        ///Neue Elemente von mir:
+        //Neue Elemente von mir:
         //Wir bauen uns den Camnamen
 
         std::string camprefix = "cam";
@@ -261,7 +305,7 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
         sstr << camprefix << camno << camsuffix;
         scs.subsession->sink = ExtendedFileSink::createNew(*env, sstr.str() , 60000);
 
-        ///Neue Elemente von mir
+        // Ende Neue Elemente von mir
         if (scs.subsession->sink == NULL) {
             *env << *rtspClient << "Failed to create a data sink for the \"" << *scs.subsession
                  << "\" subsession: " << *env->getResultMsg() << "\n";
@@ -285,6 +329,12 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
     setupNextSubsession(rtspClient);
 }
 
+/*!
+ * \brief Called as soon as a source stops streaming or the client requests a stop; Cleanup after streaming.
+ * \param rtspClient            Environment vars
+ * \param resultCode            Result of the rtsp PLAY command
+ * \param resultString          Result of the rtsp PLAY command
+ */
 void continueAfterPLAY(RTSPClient* rtspClient, int resultCode, char* resultString) {
     Boolean success = False;
 
